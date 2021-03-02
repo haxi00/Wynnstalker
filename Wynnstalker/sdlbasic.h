@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include "datafuncs.h"
 
 enum option {
 	MENU,
@@ -14,7 +15,7 @@ enum option {
 };
 
 bool init(SDL_Window** gWindow, SDL_Renderer** gRenderer);
-bool GetInput(int* flag, SDL_Rect* menuboxes, SDL_Rect backbox);
+bool GetInput(int* flag, int* worldsortFlag, SDL_Rect* menuboxes, SDL_Rect backbox, SDL_Rect* sortboxes);
 void closeSDL(SDL_Window** gWindow, SDL_Renderer** gRenderer, SDL_Surface** gSurface);
 
 #endif

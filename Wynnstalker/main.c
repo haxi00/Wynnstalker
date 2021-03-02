@@ -53,23 +53,26 @@ int main(int argc, char* args[])
     }
     SDL_Rect backbox = { width - width / 8, height / 50,  width / 10, height / 10 };
     SDL_Rect menuboxes[4] = { { width / 2 - width / 4, height / 30, width / 2, height / 5 },
-                                   { width / 2 - width / 4, 2 * height / 30 + height / 5, width / 2, height / 5 },
-                                   { width / 2 - width / 12, 3 * height / 30 + 2 * height / 5, 2 * width / 12, height / 5 },
-                                   { width / 2 - width / 12, 4 * height / 30 + 3 * height / 5, 2 * width / 12, height / 5 }, };
+                               { width / 2 - width / 4, 2 * height / 30 + height / 5, width / 2, height / 5 },
+                               { width / 2 - width / 12, 3 * height / 30 + 2 * height / 5, 2 * width / 12, height / 5 },
+                               { width / 2 - width / 12, 4 * height / 30 + 3 * height / 5, 2 * width / 12, height / 5 } };
+    SDL_Rect sortboxes[3] = { { width - width / 8, height - height / 3, width / 10, height / 10},
+                               { width - width / 8, height - height / 3 + height / 10, width / 10, height / 10},
+                               { width - width / 8, height - height / 3 + 2 * height / 10, width / 10, height / 10} };
 
     //Initializations of variables and Curl
     CURL* curl = curl_easy_init();
     jsmn_parser parser;
     jsmntok_t* tokens = NULL;
-    int flag = MENU, tokenCount, playerCount = 0, worldCount = 0;
+    int flag = MENU, worldsortflag = NUMBER, tokenCount, playerCount = 0, worldCount = 0;
     bool flagChanged = false;
     char* stringAPI = NULL;
-    worldstruct* worlds = NULL;  //using malloc later because too big for stack
+    worldstruct* worlds = NULL;  //using malloc later because its too big for stack
 
     //Main loop
     while (flag != QUIT)
     {
-        flagChanged = GetInput(&flag, menuboxes, backbox);
+        flagChanged = GetInput(&flag, &worldsortflag, menuboxes, backbox, sortboxes);
         if (flagChanged)
         {
             if (tokens != NULL) { free(tokens); tokens = NULL; }
@@ -83,11 +86,11 @@ int main(int argc, char* args[])
             //Get data from API every ~3 seconds
             if (timer / CLOCKS_PER_SEC > time || flagChanged)
             {
-                //Write Playersum in .json file
+                //Write Playersum in string
                 if (!WriteDataInString(curl, playerSum, &stringAPI))
                     exit(EXIT_FAILURE);
                 
-                //Read Playersum from .json file and print it
+                //Read Playersum from string and print it
                 jsmn_init(&parser);
                 playerCount = GetPlayercount(&parser, stringAPI);
                 if (playerCount < 0)
@@ -127,14 +130,14 @@ int main(int argc, char* args[])
                     exit(EXIT_FAILURE);
                 }
 
-                //Write Serverlist in .json file
+                //Write Serverlist in string
                 if (!WriteDataInString(curl, serverList, &stringAPI))
                 {
                     Sleep(3000);
                     exit(EXIT_FAILURE);
                 }
 
-                //Generate string and parser tokens from .json file (new jsmn_init to reset used parser)
+                //Generate parser tokens from string (new jsmn_init to reset used parser)
                 tokenCount = strlen(stringAPI) / 10;
                 tokens = malloc(sizeof(jsmntok_t) * tokenCount);
                 jsmn_init(&parser);
@@ -145,7 +148,7 @@ int main(int argc, char* args[])
                 }
 
                 //Fill worldstructs with data
-                worldCount = GetWorlds(tokens, tokenCount, stringAPI, worlds);
+                worldCount = GetWorlds(tokens, tokenCount, stringAPI, worlds, worldsortflag);
 
                 //Playersearch and print result
                 CheckPlayer(curl, worlds, worldCount, playerSearch);
@@ -181,14 +184,14 @@ int main(int argc, char* args[])
                     exit(EXIT_FAILURE);
                 }
 
-                //Write Serverlist in .json file
+                //Write Serverlist in string
                 if (!WriteDataInString(curl, serverList, &stringAPI))
                 {
                     Sleep(3000);
                     exit(EXIT_FAILURE);
                 }
 
-                //Generate string and parser tokens from .json file (new jsmn_init to reset used parser)
+                //Generate parser tokens from string (new jsmn_init to reset used parser)
                 tokenCount = strlen(stringAPI) / 10;
                 tokens = malloc(sizeof(jsmntok_t) * tokenCount);
                 jsmn_init(&parser);
@@ -200,7 +203,7 @@ int main(int argc, char* args[])
 
                 //Fill worldstructs with data
                 worlds = malloc(sizeof(worldstruct) * 100);
-                worldCount = GetWorlds(tokens, tokenCount, stringAPI, worlds);
+                worldCount = GetWorlds(tokens, tokenCount, stringAPI, worlds, worldsortflag);
 
                 printf("Worlds: %d\n", worldCount);
 
@@ -212,7 +215,7 @@ int main(int argc, char* args[])
             //Draw
             SetupRenderer(gRenderer);
             if(worlds != NULL && worldCount > 0)
-                DrawWorlds(gRenderer, font, backbox, width, height, worlds, worldCount);
+                DrawWorlds(gRenderer, font, backbox, sortboxes, worldsortflag, worlds, worldCount, width, height);
         }
 
         if (flag == INFO)
@@ -224,7 +227,7 @@ int main(int argc, char* args[])
         }
 
         SDL_RenderPresent(gRenderer);
-        Sleep(10);
+        Sleep(17);
     }
 
     //Clear up before ending program
@@ -235,3 +238,7 @@ int main(int argc, char* args[])
 
     return 0;
 }
+
+/*worldsortFlag in input einbauen mit den sortboxes
+  sorts in datafuncs.c einfügen:
+  https://www.tutorialspoint.com/c_standard_library/c_function_qsort.htm*/

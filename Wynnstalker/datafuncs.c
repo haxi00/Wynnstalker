@@ -66,7 +66,7 @@ int WriteDataInString(CURL* curl, const char* website, char** string)
     }
 }
 
-int GetWorlds(jsmntok_t* tokens, int tokencount, char* string, worldstruct* worlds)
+int GetWorlds(jsmntok_t* tokens, int tokencount, char* string, worldstruct* worlds, int worldsortflag)
 {
     worldstruct tempStruct;
     char* tempString, * tempWorld;
@@ -125,24 +125,32 @@ int GetWorlds(jsmntok_t* tokens, int tokencount, char* string, worldstruct* worl
         worldCount++;
     }
 
-    for (int n = worldCount; n > 1; --n)
-    {
-        for (int k = 0; k < n - 1; ++k)
-        {
-            tempWorld = strtok(worlds[k].name, delimiter);
-            tempWorldnumberOne = atoi(tempWorld);
-            tempWorld = strtok(worlds[k + 1].name, delimiter);
-            tempWorldnumberTwo = atoi(tempWorld);
-            if (tempWorldnumberOne > tempWorldnumberTwo)
-            {
-                tempStruct = worlds[k];
-                worlds[k] = worlds[k + 1];
-                worlds[k + 1] = tempStruct;
-            }
-        }
-    }
+    if (worldsortflag == NUMBER)
+        qsort(worlds, worldCount, sizeof(worldstruct), cmpNumber);
+    else if (worldsortflag == PLAYERS)
+        qsort(worlds, worldCount, sizeof(worldstruct), cmpPlayers);
+    else qsort(worlds, worldCount, sizeof(worldstruct), cmpUptime);
 
     return worldCount;
+}
+
+int cmpNumber(const void* a, const void* b)
+{
+    char delimiter[] = "WC";
+    worldstruct *left = (worldstruct*)a, *right = (worldstruct*)b;
+    return atoi(strtok(left->name, delimiter)) - atoi(strtok(right->name, delimiter));
+}
+
+int cmpPlayers(const void* a, const void* b)
+{
+    worldstruct* left = (worldstruct*)a, * right = (worldstruct*)b;
+    return left->playercount - right->playercount;
+}
+
+int cmpUptime(const void* a, const void* b)
+{
+    worldstruct* left = (worldstruct*)a, * right = (worldstruct*)b;
+    return left->uptime - right->uptime;
 }
 
 int GetPlayercount(jsmn_parser* parser, char* string)

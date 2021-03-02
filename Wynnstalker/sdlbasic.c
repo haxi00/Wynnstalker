@@ -36,7 +36,7 @@ bool init(SDL_Window** gWindow, SDL_Renderer** gRenderer)
 	return success;
 }
 
-bool GetInput(int *flag, SDL_Rect* menuboxes, SDL_Rect backbox)
+bool GetInput(int* flag, int* worldsortFlag, SDL_Rect* menuboxes, SDL_Rect backbox, SDL_Rect* sortboxes)
 {
 	SDL_Event e;
 	SDL_Point mouse;
@@ -66,6 +66,16 @@ bool GetInput(int *flag, SDL_Rect* menuboxes, SDL_Rect backbox)
 		{
 			*flag = SHOW_WORLDS;
 			change = true;
+		}
+		//Sortboxes
+		if (*flag == SHOW_WORLDS && e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT)
+		{
+			if (*worldsortFlag != NUMBER && mouse.x > sortboxes[0].x && mouse.y > sortboxes[0].y && mouse.x < sortboxes[0].x + sortboxes[0].w && mouse.y < sortboxes[0].y + sortboxes[0].h)
+				*worldsortFlag = NUMBER;
+			if (*worldsortFlag != PLAYERS && mouse.x > sortboxes[1].x && mouse.y > sortboxes[1].y && mouse.x < sortboxes[1].x + sortboxes[1].w && mouse.y < sortboxes[1].y + sortboxes[1].h)
+				*worldsortFlag = PLAYERS;
+			if (*worldsortFlag != UPTIME && mouse.x > sortboxes[2].x && mouse.y > sortboxes[2].y && mouse.x < sortboxes[2].x + sortboxes[2].w && mouse.y < sortboxes[2].y + sortboxes[2].h)
+				*worldsortFlag = UPTIME;
 		}
 	}
 	return change;
