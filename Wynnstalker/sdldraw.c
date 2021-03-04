@@ -51,7 +51,6 @@ void FillCircle(SDL_Renderer* gRenderer, int32_t centreX, int32_t centreY, int32
 
 void DrawMenu(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect* menuboxes, int width, int height, int playerCount)
 {
-	//Draw Online-counter top left
 	SDL_Surface* messageSurface = NULL;
 	SDL_Texture* message = NULL;
 	SDL_Point mouse;
@@ -59,7 +58,10 @@ void DrawMenu(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect* menuboxes, int 
 	SDL_Color white = { 255, 255, 255, 255 };
 	SDL_Color red = { 255, 0, 0, 255 };
 	char buffer[15];
+
 	SDL_GetMouseState(&mouse.x, &mouse.y);
+
+	//Draw online-counter top left
 	sprintf(buffer, "Online: %d", playerCount);
 	messageSurface = TTF_RenderText_Blended(font, buffer, white);
 	message = SDL_CreateTextureFromSurface(gRenderer, messageSurface);
@@ -68,73 +70,83 @@ void DrawMenu(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect* menuboxes, int 
 	SDL_FreeSurface(messageSurface);
 	SDL_DestroyTexture(message);
 
-
-	//Draw Buttons
-	//Button "Search players"
-	if(mouse.x > menuboxes[0].x && mouse.y > menuboxes[0].y && mouse.x < menuboxes[0].x + menuboxes[0].w && mouse.y < menuboxes[0].y + menuboxes[0].h)
+	//Draw menuboxes
+	for (int i = 0; i < 4; i++)
 	{
-		SDL_SetRenderDrawColor(gRenderer, white.r, white.g, white.b, white.a - 150);
-		SDL_RenderFillRect(gRenderer, &menuboxes[0]);
+		if (mouse.x > menuboxes[i].x && mouse.y > menuboxes[i].y && mouse.x < menuboxes[i].x + menuboxes[i].w && mouse.y < menuboxes[i].y + menuboxes[i].h)
+		{
+			if (i < 3)
+				SDL_SetRenderDrawColor(gRenderer, white.r, white.g, white.b, white.a - 150);
+			else SDL_SetRenderDrawColor(gRenderer, red.r, red.g, red.b, red.a - 150);
+
+			SDL_RenderFillRect(gRenderer, &menuboxes[i]);
+		}
+
+		if (i == 0)
+			sprintf(buffer, "Search players");
+
+		if (i == 1)
+			sprintf(buffer, "Show worlds");
+
+		if (i == 2)
+			sprintf(buffer, "Info");
+
+		if (i < 3)
+			messageSurface = TTF_RenderText_Blended(font, buffer, white);
+		else 
+		{ 
+			sprintf(buffer, "Quit");
+			messageSurface = TTF_RenderText_Blended(font, buffer, red); 
+		}
+		message = SDL_CreateTextureFromSurface(gRenderer, messageSurface);
+		SDL_RenderCopy(gRenderer, message, NULL, &menuboxes[i]);
+
+		SDL_FreeSurface(messageSurface);
+		SDL_DestroyTexture(message);
 	}
-
-	sprintf(buffer, "Search players");
-	messageSurface = TTF_RenderText_Blended(font, buffer, white);
-
-	message = SDL_CreateTextureFromSurface(gRenderer, messageSurface);
-	SDL_RenderCopy(gRenderer, message, NULL, &menuboxes[0]);
-
-	SDL_FreeSurface(messageSurface);
-	SDL_DestroyTexture(message);
-
-	//Button "Show worlds"
-	if (mouse.x > menuboxes[1].x && mouse.y > menuboxes[1].y && mouse.x < menuboxes[1].x + menuboxes[1].w && mouse.y < menuboxes[1].y + menuboxes[1].h)
-	{
-		SDL_SetRenderDrawColor(gRenderer, white.r, white.g, white.b, white.a - 150);
-		SDL_RenderFillRect(gRenderer, &menuboxes[1]);
-	}
-
-	sprintf(buffer, "Show worlds");
-	messageSurface = TTF_RenderText_Blended(font, buffer, white);
-
-	message = SDL_CreateTextureFromSurface(gRenderer, messageSurface);
-	SDL_RenderCopy(gRenderer, message, NULL, &menuboxes[1]);
-
-	SDL_FreeSurface(messageSurface);
-	SDL_DestroyTexture(message);
-
-	//Button "Info"
-	if (mouse.x > menuboxes[2].x && mouse.y > menuboxes[2].y && mouse.x < menuboxes[2].x + menuboxes[2].w && mouse.y < menuboxes[2].y + menuboxes[2].h)
-	{
-		SDL_SetRenderDrawColor(gRenderer, white.r, white.g, white.b, white.a - 150);
-		SDL_RenderFillRect(gRenderer, &menuboxes[2]);
-	}
-
-	sprintf(buffer, "Info");
-	messageSurface = TTF_RenderText_Blended(font, buffer, white);
-
-	message = SDL_CreateTextureFromSurface(gRenderer, messageSurface);
-	SDL_RenderCopy(gRenderer, message, NULL, &menuboxes[2]);
-
-	SDL_FreeSurface(messageSurface);
-	SDL_DestroyTexture(message);
-
-	//Button "Quit"
-	if (mouse.x > menuboxes[3].x && mouse.y > menuboxes[3].y && mouse.x < menuboxes[3].x + menuboxes[3].w && mouse.y < menuboxes[3].y + menuboxes[3].h)
-	{
-		SDL_SetRenderDrawColor(gRenderer, red.r, red.g, red.b, red.a - 150);
-		SDL_RenderFillRect(gRenderer, &menuboxes[3]);
-	}
-
-	sprintf(buffer, "Quit");
-	messageSurface = TTF_RenderText_Blended(font, buffer, red);
-
-	message = SDL_CreateTextureFromSurface(gRenderer, messageSurface);
-	SDL_RenderCopy(gRenderer, message, NULL, &menuboxes[3]);
-
-	SDL_FreeSurface(messageSurface);
-	SDL_DestroyTexture(message);
 
 	return;
+}
+
+void DrawSearchPlayers(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect backbox, worldstruct* worlds, int worldCount, int width, int height)
+{
+	char buffer[20];
+	FILE* file;
+	SDL_Surface* messageSurface = NULL;
+	SDL_Texture* message = NULL;
+	SDL_Rect searchtextRect = { width / 50, backbox.y, width / 8, backbox.h }, textRect = { width / 6, backbox.y, width / 2, backbox.h };
+	SDL_Color white = { 255,255,255,255 };
+	SDL_Point mouse;
+	SDL_GetMouseState(&mouse.x, &mouse.y);
+
+	SDL_SetRenderDrawColor(gRenderer, white.r, white.g, white.b, white.a);
+
+	//Draw "Search:"
+	strcpy(buffer, "Search:");
+	messageSurface = TTF_RenderText_Blended(font, buffer, white);
+	message = SDL_CreateTextureFromSurface(gRenderer, messageSurface);
+	SDL_RenderCopy(gRenderer, message, NULL, &searchtextRect);
+	SDL_FreeSurface(messageSurface);
+	SDL_DestroyTexture(message);
+
+	//Draw textbox
+	SDL_RenderDrawRect(gRenderer, &textRect);
+
+	//Draw backbox
+	SDL_RenderDrawRect(gRenderer, &backbox);
+	strcpy(buffer, "Back");
+	messageSurface = TTF_RenderText_Blended(font, buffer, white);
+	message = SDL_CreateTextureFromSurface(gRenderer, messageSurface);
+	SDL_RenderCopy(gRenderer, message, NULL, &backbox);
+	SDL_FreeSurface(messageSurface);
+	SDL_DestroyTexture(message);
+	if (mouse.x > backbox.x && mouse.y > backbox.y && mouse.x < backbox.x + backbox.w && mouse.y < backbox.y + backbox.h)
+	{
+		SDL_SetRenderDrawColor(gRenderer, white.r, white.g, white.b, white.a - 150);
+		SDL_RenderFillRect(gRenderer, &backbox);
+	}
+
+	//fpclose(file);
 }
 
 void DrawWorlds(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect backbox, SDL_Rect* sortboxes, int worldsortflag, worldstruct* worlds, int worldCount, int width, int height)
@@ -189,7 +201,7 @@ void DrawWorlds(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect backbox, SDL_R
 	SDL_FreeSurface(messageSurface);
 	SDL_DestroyTexture(message);
 
-	//Draw sortboxes
+	//Draw "Number" sortbox
 	SDL_SetRenderDrawColor(gRenderer, white.r, white.g, white.b, white.a);
 	SDL_RenderDrawRect(gRenderer, &sortboxes[0]);
 	strcpy(buffer, "Number");
@@ -204,6 +216,7 @@ void DrawWorlds(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect backbox, SDL_R
 		SDL_RenderFillRect(gRenderer, &sortboxes[0]);
 	}
 
+	//Draw "Players" sortbox
 	SDL_SetRenderDrawColor(gRenderer, white.r, white.g, white.b, white.a);
 	SDL_RenderDrawRect(gRenderer, &sortboxes[1]);
 	strcpy(buffer, "Players");
@@ -218,6 +231,7 @@ void DrawWorlds(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect backbox, SDL_R
 		SDL_RenderFillRect(gRenderer, &sortboxes[1]);
 	}
 
+	//Draw "Uptime" sortbox
 	SDL_SetRenderDrawColor(gRenderer, white.r, white.g, white.b, white.a);
 	SDL_RenderDrawRect(gRenderer, &sortboxes[2]);
 	strcpy(buffer, "Uptime");

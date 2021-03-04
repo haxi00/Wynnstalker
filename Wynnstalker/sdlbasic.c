@@ -62,6 +62,11 @@ bool GetInput(int* flag, int* worldsortFlag, SDL_Rect* menuboxes, SDL_Rect backb
 			*flag = QUIT;
 			change = true;
 		}
+		if (e.button.button == SDL_BUTTON_LEFT && e.type == SDL_MOUSEBUTTONUP && *flag == MENU && (mouse.x > menuboxes[0].x && mouse.y > menuboxes[0].y && mouse.x < menuboxes[0].x + menuboxes[0].w && mouse.y < menuboxes[0].y + menuboxes[0].h))
+		{
+			*flag = SEARCH_PLAYERS;
+			change = true;
+		}
 		if (e.button.button == SDL_BUTTON_LEFT && e.type == SDL_MOUSEBUTTONUP && *flag == MENU && (mouse.x > menuboxes[1].x && mouse.y > menuboxes[1].y && mouse.x < menuboxes[1].x + menuboxes[1].w && mouse.y < menuboxes[1].y + menuboxes[1].h))
 		{
 			*flag = SHOW_WORLDS;

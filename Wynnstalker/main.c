@@ -8,6 +8,7 @@
 #include "datafuncs.h"
 #include "sdlbasic.h"
 #include "sdldraw.h"
+#include "resource.h"
 
 #pragma comment(lib, "Normaliz.lib")
 #pragma comment(lib, "advapi32.lib")
@@ -152,7 +153,7 @@ int main(int argc, char* args[])
                 worldCount = GetWorlds(tokens, tokenCount, stringAPI, worlds, worldsortflag);
 
                 //Playersearch and print result
-                CheckPlayer(curl, worlds, worldCount, playerSearch);
+                //CheckPlayer(curl, worlds, worldCount, playerSearch);
 
                 //Force next update to take ~3 seconds
                 if (!flagChanged)
@@ -160,9 +161,9 @@ int main(int argc, char* args[])
             }
 
             //Draw
-            //SetupRenderer(gRenderer);
-            //if (worlds != NULL)
-                //DrawSearchPlayers(gRenderer, font, backbox, width, height,);
+            SetupRenderer(gRenderer);
+            if (worlds != NULL)
+                DrawSearchPlayers(gRenderer, font, backbox, worlds, worldCount, width, height);
         }
 
         if (flag == SHOW_WORLDS)
