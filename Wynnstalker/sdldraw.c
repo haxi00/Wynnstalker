@@ -173,6 +173,7 @@ void DrawWorlds(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect backbox, SDL_R
 	SDL_RenderCopy(gRenderer, message, NULL, &worldcountRect[0]);
 	SDL_FreeSurface(messageSurface);
 	SDL_DestroyTexture(message);
+
 	strcpy(buffer, "Worlds");
 	messageSurface = TTF_RenderText_Blended(font, buffer, white);
 	message = SDL_CreateTextureFromSurface(gRenderer, messageSurface);
@@ -251,7 +252,7 @@ void DrawWorlds(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect backbox, SDL_R
 			tempWorld.y = i * (heightUnit-heightUnit/3) - heightUnit/15;
 			tempWorld.w = widthUnit;
 			tempWorld.h = heightUnit;
-			if (worlds[counter].playercount < MAXWORLDPLAYERS && worlds[counter].playercount >= 0)
+			if (worlds[counter].playercount <= MAXWORLDPLAYERS && worlds[counter].playercount >= 0)
 				DrawSingleWorld(gRenderer, font, worlds[counter], tempWorld);
 			counter++;
 		}

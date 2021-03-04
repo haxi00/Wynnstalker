@@ -73,11 +73,6 @@ int main(int argc, char* args[])
     while (flag != QUIT)
     {
         flagChanged = GetInput(&flag, &worldsortflag, menuboxes, backbox, sortboxes);
-        if (flagChanged)
-        {
-            if (tokens != NULL) { free(tokens); tokens = NULL; }
-            if (worlds != NULL) { free(worlds); worlds = NULL; }  
-        }
 
         if (flag == MENU)
         {
@@ -86,6 +81,8 @@ int main(int argc, char* args[])
             //Get data from API every ~3 seconds
             if (timer / CLOCKS_PER_SEC > time || flagChanged)
             {
+                if (stringAPI != NULL) { free(stringAPI); stringAPI = NULL; }
+
                 //Write Playersum in string
                 if (!WriteDataInString(curl, playerSum, &stringAPI))
                     exit(EXIT_FAILURE);
@@ -101,8 +98,11 @@ int main(int argc, char* args[])
                 printf("Players online: %d\n", playerCount);
 
                 //Force next update to take ~3 seconds
-                if(!flagChanged)
+                if (!flagChanged)
+                {
+                    time = timer / CLOCKS_PER_SEC;
                     time += 3;
+                }
             }
             
             //Draw
@@ -118,6 +118,7 @@ int main(int argc, char* args[])
             if (timer / CLOCKS_PER_SEC > time || flagChanged)
             {
                 //Cleaning up if used before
+                if (stringAPI != NULL) { free(stringAPI); stringAPI = NULL; }
                 if (tokens != NULL) { free(tokens); tokens = NULL; }
                 if (worlds != NULL) { free(worlds); worlds = NULL; }
 
@@ -172,17 +173,9 @@ int main(int argc, char* args[])
             if (timer / CLOCKS_PER_SEC > time || flagChanged)
             {
                 //Cleaning up if used before
+                if (stringAPI != NULL) { free(stringAPI); stringAPI = NULL; }
                 if (tokens != NULL) { free(tokens); tokens = NULL; }
                 if (worlds != NULL) { free(worlds); worlds = NULL; }
-
-                //Allocate worlds
-                worlds = malloc(sizeof(worldstruct) * 100);
-                if (worlds == NULL)
-                {
-                    printf("malloc returned NULL for worldstruct (run out of RAM?)\n");
-                    Sleep(3000);
-                    exit(EXIT_FAILURE);
-                }
 
                 //Write Serverlist in string
                 if (!WriteDataInString(curl, serverList, &stringAPI))
@@ -203,6 +196,12 @@ int main(int argc, char* args[])
 
                 //Fill worldstructs with data
                 worlds = malloc(sizeof(worldstruct) * 100);
+                if (worlds == NULL)
+                {
+                    printf("malloc returned NULL for worldstruct (run out of RAM?)\n");
+                    Sleep(3000);
+                    exit(EXIT_FAILURE);
+                }
                 worldCount = GetWorlds(tokens, tokenCount, stringAPI, worlds, worldsortflag);
 
                 printf("Worlds: %d\n", worldCount);
@@ -231,14 +230,11 @@ int main(int argc, char* args[])
     }
 
     //Clear up before ending program
-    if (tokens != NULL) free(tokens);
-    if (worlds != NULL) free(worlds);
+    if (stringAPI != NULL) { free(stringAPI); stringAPI = NULL; }
+    if (tokens != NULL) { free(tokens); tokens = NULL; }
+    if (worlds != NULL) { free(worlds); worlds = NULL; }
     curl_easy_cleanup(curl);
     closeSDL(&gWindow, &gRenderer, &gSurface);
 
     return 0;
 }
-
-/*worldsortFlag in input einbauen mit den sortboxes
-  sorts in datafuncs.c einfügen:
-  https://www.tutorialspoint.com/c_standard_library/c_function_qsort.htm*/

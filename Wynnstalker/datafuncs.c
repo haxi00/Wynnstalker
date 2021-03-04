@@ -49,9 +49,13 @@ int WriteDataInString(CURL* curl, const char* website, char** string)
 
     if (chunk.memory != NULL)
     {
-        *string = malloc(chunk.size);
-        strncpy(*string, chunk.memory, chunk.size);
-        *(*string+chunk.size) = '\0';
+        *string = malloc(chunk.size+1);
+        if (string == NULL)
+        {
+            printf("malloc failed in WriteDataInString()!\n");
+            return 0;
+        }
+        strncpy(*string, chunk.memory, chunk.size+1);
         free(chunk.memory);
     }
     else
@@ -68,10 +72,9 @@ int WriteDataInString(CURL* curl, const char* website, char** string)
 
 int GetWorlds(jsmntok_t* tokens, int tokencount, char* string, worldstruct* worlds, int worldsortflag)
 {
-    worldstruct tempStruct;
-    char* tempString, * tempWorld;
+    char* tempString;
     char delimiter[] = "WC";
-    int i = FIRSTWORLDINDEX, tempPlayercount, worldCount = 0, tempWorldnumberOne, tempWorldnumberTwo;
+    int i = FIRSTWORLDINDEX, tempPlayercount, worldCount = 0;
 
     if (tokens[FIRSTWORLDINDEX].type != JSMN_STRING && tokens[FIRSTWORLDINDEX + 1].type != JSMN_OBJECT)
     {
