@@ -25,10 +25,6 @@ const char playerSearch[] = "https://api.wynncraft.com/public_api.php?action=sta
 
 int main(int argc, char* args[])
 {
-    //Variables for measuring time
-    clock_t timer = clock();
-    double time = timer / CLOCKS_PER_SEC;
-
     //SDL init and required variables
     SDL_Window* gWindow = NULL;
     SDL_Renderer* gRenderer = NULL;
@@ -39,12 +35,14 @@ int main(int argc, char* args[])
         Sleep(3000);
         exit(EXIT_FAILURE);
     }
-    gSurface = IMG_Load("icon.png");
+    gSurface = IMG_Load("icon.ico");
     int width, height;
     //SDL_GL_GetDrawableSize(gWindow, &width, &height);
     width = 1280, height = 720;
     SDL_SetWindowSize(gWindow, width, height);
     SDL_SetWindowIcon(gWindow, gSurface);
+    long timer = SDL_GetTicks();
+    double time = timer / 1000;
     TTF_Font* font = TTF_OpenFont("OpenSans-Bold.ttf", 100);
     if (font == NULL)
     {
@@ -53,6 +51,7 @@ int main(int argc, char* args[])
         exit(EXIT_FAILURE);
     }
     SDL_Rect backbox = { width - width / 8, height / 50,  width / 10, height / 10 };
+    SDL_Rect textRect = { width / 6, backbox.y, width / 2, backbox.h };
     SDL_Rect menuboxes[4] = { { width / 2 - width / 4, height / 30, width / 2, height / 5 },
                                { width / 2 - width / 4, 2 * height / 30 + height / 5, width / 2, height / 5 },
                                { width / 2 - width / 12, 3 * height / 30 + 2 * height / 5, 2 * width / 12, height / 5 },
@@ -66,21 +65,21 @@ int main(int argc, char* args[])
     jsmn_parser parser;
     jsmntok_t* tokens = NULL;
     int flag = MENU, worldsortflag = NUMBER, tokenCount, playerCount = 0, worldCount = 0;
-    bool flagChanged = false;
-    char* stringAPI = NULL;
+    bool flagChanged = false, searchactive = false, enterflag = false;
+    char* stringAPI = NULL, playername[17] = { 0 };
     worldstruct* worlds = NULL;  //using malloc later because its too big for stack
 
     //Main loop
     while (flag != QUIT)
     {
-        flagChanged = GetInput(&flag, &worldsortflag, menuboxes, backbox, sortboxes);
+        flagChanged = GetInput(&flag, &worldsortflag, &searchactive, &enterflag, menuboxes, backbox, sortboxes, textRect, playername);
 
         if (flag == MENU)
         {
             timer = clock();
             
             //Get data from API every ~3 seconds
-            if (timer / CLOCKS_PER_SEC > time || flagChanged)
+            if (timer / 1000 > time || flagChanged)
             {
                 if (stringAPI != NULL) { free(stringAPI); stringAPI = NULL; }
 
@@ -101,7 +100,7 @@ int main(int argc, char* args[])
                 //Force next update to take ~3 seconds
                 if (!flagChanged)
                 {
-                    time = timer / CLOCKS_PER_SEC;
+                    time = timer / 1000;
                     time += 3;
                 }
             }
@@ -116,7 +115,7 @@ int main(int argc, char* args[])
             timer = clock();
 
             //Get data from API every ~3 seconds
-            if (timer / CLOCKS_PER_SEC > time || flagChanged)
+            if (timer / 1000 > time || flagChanged || enterflag)
             {
                 //Cleaning up if used before
                 if (stringAPI != NULL) { free(stringAPI); stringAPI = NULL; }
@@ -153,17 +152,21 @@ int main(int argc, char* args[])
                 worldCount = GetWorlds(tokens, tokenCount, stringAPI, worlds, worldsortflag);
 
                 //Playersearch and print result
-                //CheckPlayer(curl, worlds, worldCount, playerSearch);
+                if (enterflag)
+                    CheckPlayer(curl, worlds, worldCount, playerSearch, playername);
 
                 //Force next update to take ~3 seconds
                 if (!flagChanged)
+                {
+                    time = timer / 1000;
                     time += 3;
+                }
             }
 
             //Draw
             SetupRenderer(gRenderer);
             if (worlds != NULL)
-                DrawSearchPlayers(gRenderer, font, backbox, worlds, worldCount, width, height);
+                DrawSearchPlayers(gRenderer, font, backbox, textRect, worlds, worldCount, width, height, searchactive, playername);
         }
 
         if (flag == SHOW_WORLDS)
@@ -171,7 +174,7 @@ int main(int argc, char* args[])
             timer = clock();
 
             //Get data from API every ~3 seconds
-            if (timer / CLOCKS_PER_SEC > time || flagChanged)
+            if (timer / 1000 > time || flagChanged)
             {
                 //Cleaning up if used before
                 if (stringAPI != NULL) { free(stringAPI); stringAPI = NULL; }
@@ -209,7 +212,10 @@ int main(int argc, char* args[])
 
                 //Force next update to take ~3 seconds
                 if (!flagChanged)
+                {
+                    time = timer / 1000;
                     time += 3;
+                }
             }
 
             //Draw

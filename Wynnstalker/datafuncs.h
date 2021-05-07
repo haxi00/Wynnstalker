@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <curl.h>
+#include <stdbool.h>
 #include "jsmn.h"
 
 #define MAXWORLDPLAYERS 45
@@ -29,7 +30,7 @@ int cmpNumber(const void* a, const void* b);
 int cmpPlayers(const void* a, const void* b);
 int cmpUptime(const void* a, const void* b);
 int GetPlayercount(jsmn_parser* parser, char* string);
-void CheckPlayer(CURL* curl, worldstruct* worlds, int worldcount, const char* website);
+void CheckPlayer(CURL* curl, worldstruct* worlds, int worldcount, const char* website, char* playername);
 char* GetCertainString(char* buffer, jsmntok_t* tokens, int placeInFile);
 int GetTokens(jsmn_parser* parser, jsmntok_t* tokens, unsigned int tokencount, char* string);
 

@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "sdlbasic.h"
 #include <stdio.h>
 
@@ -36,12 +38,12 @@ bool init(SDL_Window** gWindow, SDL_Renderer** gRenderer)
 	return success;
 }
 
-bool GetInput(int* flag, int* worldsortFlag, SDL_Rect* menuboxes, SDL_Rect backbox, SDL_Rect* sortboxes)
+bool GetInput(int* flag, int* worldsortFlag, bool* searchactive, bool* enterflag, SDL_Rect* menuboxes, SDL_Rect backbox, SDL_Rect* sortboxes, SDL_Rect textRect, char* playername)
 {
 	SDL_Event e;
 	SDL_Point mouse;
 	bool change = false;
-
+	SDL_StartTextInput();
 	while (SDL_PollEvent(&e) != 0)
 	{
 		SDL_GetMouseState(&mouse.x, &mouse.y);
@@ -57,6 +59,12 @@ bool GetInput(int* flag, int* worldsortFlag, SDL_Rect* menuboxes, SDL_Rect backb
 			*flag = MENU;
 			change = true;
 		}
+		//Search Players searchboxflag
+		if (*flag == SEARCH_PLAYERS && e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT && mouse.x > textRect.x && mouse.y > textRect.y && mouse.x < textRect.x + textRect.w && mouse.y < textRect.y + textRect.h)
+			*searchactive = true;
+		else if (*flag != SEARCH_PLAYERS || (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT && (mouse.x < textRect.x || mouse.y < textRect.y || mouse.x > textRect.x + textRect.w || mouse.y > textRect.y + textRect.h)))
+			*searchactive = false;
+		//Menuboxes
 		if (((*flag == MENU && (mouse.x > menuboxes[3].x && mouse.y > menuboxes[3].y && mouse.x < menuboxes[3].x + menuboxes[3].w && mouse.y < menuboxes[3].y + menuboxes[3].h)) && e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT))
 		{
 			*flag = QUIT;
@@ -72,7 +80,7 @@ bool GetInput(int* flag, int* worldsortFlag, SDL_Rect* menuboxes, SDL_Rect backb
 			*flag = SHOW_WORLDS;
 			change = true;
 		}
-		//Sortboxes
+		//Show Worlds Sortboxes
 		if (*flag == SHOW_WORLDS && e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT)
 		{
 			if (*worldsortFlag != NUMBER && mouse.x > sortboxes[0].x && mouse.y > sortboxes[0].y && mouse.x < sortboxes[0].x + sortboxes[0].w && mouse.y < sortboxes[0].y + sortboxes[0].h)
@@ -82,7 +90,28 @@ bool GetInput(int* flag, int* worldsortFlag, SDL_Rect* menuboxes, SDL_Rect backb
 			if (*worldsortFlag != UPTIME && mouse.x > sortboxes[2].x && mouse.y > sortboxes[2].y && mouse.x < sortboxes[2].x + sortboxes[2].w && mouse.y < sortboxes[2].y + sortboxes[2].h)
 				*worldsortFlag = UPTIME;
 		}
+		//Show Players textinput
+		if (*flag == SEARCH_PLAYERS && *searchactive == true)
+		{
+			
+			if (e.type == SDL_TEXTINPUT || e.type == SDL_KEYDOWN)
+			{
+				if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_BACKSPACE && strlen(playername) > 0)
+					playername[strlen(playername) - 1] = 0;
+				else if (e.type == SDL_TEXTINPUT && strlen(playername) < 16)
+					strcat(playername, e.text.text);
+			}
+			
+		}
+		//Show Players textinput finished (hitting enter)
+		if (*flag == SEARCH_PLAYERS && *searchactive == true && strlen(playername) > 2 && e.key.keysym.sym == SDLK_RETURN)
+		{
+			*searchactive = false;
+			*enterflag = true;
+		}
+		else *enterflag = false;
 	}
+	SDL_StopTextInput();
 	return change;
 }
 

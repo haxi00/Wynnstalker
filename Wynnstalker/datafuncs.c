@@ -78,7 +78,9 @@ int GetWorlds(jsmntok_t* tokens, int tokencount, char* string, worldstruct* worl
 
     if (tokens[FIRSTWORLDINDEX].type != JSMN_STRING && tokens[FIRSTWORLDINDEX + 1].type != JSMN_OBJECT)
     {
-        printf("Wynntils/Wynncraft API changed! Program needs update! (Error in GetWorlds())\n");
+        printf("ERROR! The downloaded data from the API doesnt match the signature of what should have been obtained.\n");
+        printf("Either the API of Wynncraft/Wynntils changed or there was a error while trying retrieve data from the API.\n\n");
+        printf("Downloaded message from API:\n%s\n\n", string);
         return 0;
     }
 
@@ -94,6 +96,7 @@ int GetWorlds(jsmntok_t* tokens, int tokencount, char* string, worldstruct* worl
             printf("Error while getting string in GetWorlds() (tempString == NULL)\n");
             return 0;
         }
+        //Skip TEST- and YT-World
         if(!strcmp(tempString, "TEST") || !strcmp(tempString, "YT"))
         {
             free(tempString);
@@ -192,22 +195,18 @@ int GetPlayercount(jsmn_parser* parser, char* string)
     }
 }
 
-void CheckPlayer(CURL* curl, worldstruct* worlds, int worldcount, const char* website)
+void CheckPlayer(CURL* curl, worldstruct* worlds, int worldcount, const char* website, char* playername)
 {
-    char playername[17], *apiURL, *apiString;
-
-    printf("Enter name: ");
-    if (scanf(" %s", &playername) != 1)
-    {
-        printf("Error while entering a name for search! Code 1\n");
-        return;
-    }
-    if (playername[strlen(playername)] != '\0')
-    {
-        printf("Error while entering a name for search! Code 2\n");
-        return;
-    }
-
+    char* apiURL, * apiString, tempplayername[25] = { 0 }, *temp;
+    int tokenCount, n = 0;
+    bool foundflag = false;
+    FILE* file = fopen("data.txt", "w");
+    fclose(file);
+    jsmn_parser parser;
+    jsmntok_t* tokens = NULL;
+    jsmn_init(&parser);
+    
+    //Creating URL (combining first part of URL and playername)
     apiURL = malloc(strlen(website) + strlen(playername) + 1);
     if (apiURL == NULL)
     {
@@ -217,17 +216,91 @@ void CheckPlayer(CURL* curl, worldstruct* worlds, int worldcount, const char* we
     strcpy(apiURL, website);
     strcat(apiURL, playername);
 
+    //Getting data from wynncrafts search-API
     WriteDataInString(curl, apiURL, &apiString);
+    tokenCount = strlen(apiString) / 5;
+    tokens = malloc(sizeof(jsmntok_t) * tokenCount);
+    if (!GetTokens(&parser, tokens, tokenCount, apiString))
+    {
+        Sleep(3000);
+        exit(EXIT_FAILURE);
+    }
+    
+    //Check if player has ever been on wynncraft before
+    for (int n = 0; n < tokenCount; n++)
+    {
+        temp = GetCertainString(apiString, tokens, n);
+        if (!strcmp("players", temp))
+        {
+            free(temp);
+            break;
+        }
+        free(temp);
+    }
 
-    for (int i = 0; i <= worldcount; i++)
-        for (int j = 0; j < worlds[i].playercount; j++)
-            if (!strcmp(playername, worlds[i].players[j]))
+    if (n == tokenCount)
+    {
+        printf("ERROR! Downloaded data from API doesnt match the signature of what should be downloaded (in CheckPlayer(), wynncraft API).\n");
+        printf("API updated/changed or there was a error.\n");
+        printf("Downloaded data:\n%s\n", apiString);
+        Sleep(3000);
+        exit(EXIT_FAILURE);
+    }
+    else
+    {
+        strcat(tempplayername, "[\"");
+        strcat(tempplayername, playername);  
+        strcat(tempplayername, "\"]");
+        while (1)
+        {
+            temp = GetCertainString(apiString, tokens, n);
+            if (!strcmp("search", temp))
             {
-                printf("Found %s on %s\t%d players on %s\n", playername, worlds[i].name, worlds[i].playercount, worlds[i].name);
-                return;
+                free(temp);
+                break;
             }
+            else if (!strcmp(tempplayername, temp))
+            {
+                free(temp);
+                foundflag = true;
+                break;
+            }
+            free(temp);
+            n++;
+        }
+    }
 
-    printf("%s was not found!\n", playername);
+    //If found write name in "Virus.exe"
+    if (foundflag)
+    {
+        //Check if already in file
+        file = fopen("data.txt", "r");
+        while (!feof(file))
+        {
+            fgets(tempplayername, 24, file);
+            if (strtok(tempplayername, "\n") == NULL)
+            {
+                printf("strtok error\n");
+                Sleep(3000);
+                exit(0);
+            }
+            if (!strcmp(tempplayername, playername))
+            {
+                n = -1;
+                break;
+            }
+        }
+        fclose(file);
+
+        if (n >= 0)
+        {
+            file = fopen("data.txt", "a");
+            fprintf(file, "%s\n", playername);
+            fclose(file);
+        }
+    }
+
+    playername[0] = 0;
 
     return;
 }
@@ -236,7 +309,7 @@ char* GetCertainString(char* buffer, jsmntok_t* tokens, int placeInFile)
 {
     jsmntok_t key = tokens[placeInFile];
 
-    if (key.type != JSMN_ARRAY && key.type != JSMN_OBJECT)
+    if (key.type == JSMN_ARRAY || key.type == JSMN_OBJECT || key.type == JSMN_PRIMITIVE || key.type == JSMN_STRING)
     {
 
         unsigned int laenge = key.end - key.start;

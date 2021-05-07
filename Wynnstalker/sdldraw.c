@@ -108,16 +108,24 @@ void DrawMenu(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect* menuboxes, int 
 	return;
 }
 
-void DrawSearchPlayers(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect backbox, worldstruct* worlds, int worldCount, int width, int height)
+void DrawSearchPlayers(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect backbox, SDL_Rect textRect, worldstruct* worlds, int worldCount, int width, int height, bool searchactive, char* playername)
 {
 	char buffer[20];
 	FILE* file;
 	SDL_Surface* messageSurface = NULL;
 	SDL_Texture* message = NULL;
-	SDL_Rect searchtextRect = { width / 50, backbox.y, width / 8, backbox.h }, textRect = { width / 6, backbox.y, width / 2, backbox.h };
+	SDL_Rect searchtextRect = { width / 50, backbox.y, width / 8, backbox.h };
+	SDL_Rect actualtextRect = { textRect.x, textRect.y, strlen(playername) * (textRect.w/16), textRect.h };
 	SDL_Color white = { 255,255,255,255 };
 	SDL_Point mouse;
 	SDL_GetMouseState(&mouse.x, &mouse.y);
+
+	//Fill searchbox
+	if (searchactive == true)
+	{
+		SDL_SetRenderDrawColor(gRenderer, white.r, white.g, white.b, white.a - 200);
+		SDL_RenderFillRect(gRenderer, &textRect);
+	}
 
 	SDL_SetRenderDrawColor(gRenderer, white.r, white.g, white.b, white.a);
 
@@ -129,8 +137,17 @@ void DrawSearchPlayers(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect backbox
 	SDL_FreeSurface(messageSurface);
 	SDL_DestroyTexture(message);
 
-	//Draw textbox
+	//Draw searchbox
 	SDL_RenderDrawRect(gRenderer, &textRect);
+
+	//Draw text in searchbox
+	messageSurface = TTF_RenderText_Blended(font, playername, white);
+	message = SDL_CreateTextureFromSurface(gRenderer, messageSurface);
+	SDL_RenderCopy(gRenderer, message, NULL, &actualtextRect);
+	SDL_FreeSurface(messageSurface);
+	SDL_DestroyTexture(message);
+	
+	//Draw counter
 
 	//Draw backbox
 	SDL_RenderDrawRect(gRenderer, &backbox);

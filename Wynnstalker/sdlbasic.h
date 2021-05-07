@@ -15,7 +15,7 @@ enum option {
 };
 
 bool init(SDL_Window** gWindow, SDL_Renderer** gRenderer);
-bool GetInput(int* flag, int* worldsortFlag, SDL_Rect* menuboxes, SDL_Rect backbox, SDL_Rect* sortboxes);
+bool GetInput(int* flag, int* worldsortFlag, bool* searchactive, bool* enterflag, SDL_Rect* menuboxes, SDL_Rect backbox, SDL_Rect* sortboxes, SDL_Rect textRect, char* playername);
 void closeSDL(SDL_Window** gWindow, SDL_Renderer** gRenderer, SDL_Surface** gSurface);
 
 #endif
