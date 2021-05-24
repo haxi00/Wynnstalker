@@ -111,12 +111,11 @@ void DrawMenu(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect* menuboxes, int 
 void DrawSearchPlayers(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect backbox, SDL_Rect textRect, worldstruct* worlds, int worldCount, int width, int height, bool searchactive, char* playername)
 {
 	char buffer[20];
-	FILE* file;
 	SDL_Surface* messageSurface = NULL;
 	SDL_Texture* message = NULL;
 	SDL_Rect searchtextRect = { width / 50, backbox.y, width / 8, backbox.h };
 	SDL_Rect actualtextRect = { textRect.x, textRect.y, strlen(playername) * (textRect.w/16), textRect.h };
-	SDL_Color white = { 255,255,255,255 };
+	SDL_Color white = { 255,255,255,255 }, red = { 255, 0, 0, 255 }, green = { 0, 230, 64, 255 };
 	SDL_Point mouse;
 	SDL_GetMouseState(&mouse.x, &mouse.y);
 
@@ -163,7 +162,36 @@ void DrawSearchPlayers(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect backbox
 		SDL_RenderFillRect(gRenderer, &backbox);
 	}
 
-	//fpclose(file);
+	//Draw searched names
+	int n = 0, ydiff = height / 8, ystart = textRect.y + height / 6, charwidth = width / 50;
+	SDL_Rect nameRect = { searchtextRect.w / 2, 0, 0, height / 10 };
+	SDL_Rect playerRect = { searchtextRect.w / 2, 0, width / 4, height / 10 };
+	playerstruct *players = GetPlayers(worlds, worldCount, &n);
+	if (players != NULL)
+	{
+		for (int i = 0; i < n; i++)
+		{
+			messageSurface = TTF_RenderText_Blended(font, players[i].name, white);
+			message = SDL_CreateTextureFromSurface(gRenderer, messageSurface);
+
+			nameRect.y = ystart + i * ydiff;
+			nameRect.w = strlen(players[i].name) * charwidth;
+			playerRect.y =
+
+			SDL_RenderCopy(gRenderer, message, NULL, &nameRect);
+
+			if(players[i].online)
+				SDL_SetRenderDrawColor(gRenderer, green.r, green.g, green.b, green.a);
+			else
+				SDL_SetRenderDrawColor(gRenderer, red.r, red.g, red.b, red.a);
+			SDL_RenderDrawRect(gRenderer, &nameRect);
+
+			SDL_FreeSurface(messageSurface);
+			SDL_DestroyTexture(message);
+		}
+
+		free(players);
+	}
 }
 
 void DrawWorlds(SDL_Renderer* gRenderer, TTF_Font* font, SDL_Rect backbox, SDL_Rect* sortboxes, int worldsortflag, worldstruct* worlds, int worldCount, int width, int height)
@@ -324,7 +352,7 @@ void DrawSingleWorld(SDL_Renderer* gRenderer, TTF_Font* font, worldstruct world,
 	//Worlds uptime
 	hours = world.uptime / 3600;
 	rest = (double) world.uptime / 3600 - hours;
-	minutes = rest * 60;
+	minutes = (int)rest * 60;
 
 	if (hours == 0)
 	{

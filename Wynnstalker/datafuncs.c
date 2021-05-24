@@ -7,6 +7,7 @@
 //Global variables
 #define PLAYERSONLINEINDEX 2
 #define FIRSTWORLDINDEX 3
+const char filename[] = "data.txt";
 
 //Struct to store string from api temporary
 struct MemoryStruct {
@@ -197,11 +198,10 @@ int GetPlayercount(jsmn_parser* parser, char* string)
 
 void CheckPlayer(CURL* curl, worldstruct* worlds, int worldcount, const char* website, char* playername)
 {
-    char* apiURL, * apiString, tempplayername[25] = { 0 }, *temp;
+    char* apiURL, * apiString, tempplayername[25] = { 0 }, *temp, delimiter[4] = "[\"]";
     int tokenCount, n = 0;
     bool foundflag = false;
-    FILE* file = fopen("data.txt", "w");
-    fclose(file);
+    FILE* file;
     jsmn_parser parser;
     jsmntok_t* tokens = NULL;
     jsmn_init(&parser);
@@ -259,8 +259,9 @@ void CheckPlayer(CURL* curl, worldstruct* worlds, int worldcount, const char* we
                 free(temp);
                 break;
             }
-            else if (!strcmp(tempplayername, temp))
+            else if (!_stricmp(tempplayername, temp))
             {
+                strcpy(tempplayername, temp);
                 free(temp);
                 foundflag = true;
                 break;
@@ -270,32 +271,52 @@ void CheckPlayer(CURL* curl, worldstruct* worlds, int worldcount, const char* we
         }
     }
 
-    //If found write name in "Virus.exe"
+    //If found write name in file
     if (foundflag)
     {
+        char fileline[24];
+        n = 0;
         //Check if already in file
-        file = fopen("data.txt", "r");
+        file = fopen(filename, "a+");
         while (!feof(file))
         {
-            fgets(tempplayername, 24, file);
-            if (strtok(tempplayername, "\n") == NULL)
+            if (n > 20)
+            {
+                foundflag = false;                      //list is full (20 names)
+                break;
+            }
+            n++;
+
+            fgets(fileline, 24, file);
+            if (strtok(fileline, "\n") == NULL)
             {
                 printf("strtok error\n");
                 Sleep(3000);
                 exit(0);
             }
-            if (!strcmp(tempplayername, playername))
+            if (!_stricmp(fileline, playername))
             {
-                n = -1;
+                foundflag = false;                      //playername already in file, change foundflag to avoid if below
                 break;
             }
         }
         fclose(file);
 
-        if (n >= 0)
+        if (foundflag)
         {
-            file = fopen("data.txt", "a");
-            fprintf(file, "%s\n", playername);
+            //Cut ["
+            temp = &tempplayername[2];
+            //Cut "]
+            if (strtok(&tempplayername[2], "\"") == NULL)
+            {
+                printf("strtok error\n");
+                Sleep(3000);
+                exit(0);
+            }
+
+            file = fopen(filename, "a");
+            fprintf(file, "%s\n", temp);
+            temp = NULL;
             fclose(file);
         }
     }
@@ -303,6 +324,57 @@ void CheckPlayer(CURL* curl, worldstruct* worlds, int worldcount, const char* we
     playername[0] = 0;
 
     return;
+}
+
+playerstruct* GetPlayers(worldstruct* worlds, int worldCount, int *n)
+{
+    char buffer[18];
+    playerstruct* players;
+    FILE* file = fopen(filename, "r");
+    if (file == NULL)
+        return NULL;
+    while (fgets(buffer, sizeof(buffer), file) != NULL)
+        *n+=1;
+
+    if (!*n)
+        return NULL;
+    else
+        fseek(file, 0, SEEK_SET);
+
+    players = malloc(*n * sizeof(playerstruct));
+    if(players == NULL)
+    {
+        printf("Error: malloc in GetPlayers()\n");
+        Sleep(3000);
+        exit(0);
+    }
+
+    for (int i = 0; i < *n; i++)
+    {
+        fgets(buffer, sizeof(buffer), file);
+        if (strtok(buffer, "\n") == NULL)
+        {
+            printf("strtok error\n");
+            Sleep(3000);
+            exit(0);
+        }
+        strcpy(players[i].name, buffer);
+        players[i].online = CheckPlayerOnline(players[i].name, &players[i].world, worlds, worldCount);
+    }
+    fclose(file);
+    return players;
+}
+
+bool CheckPlayerOnline(char* name, worldstruct* playerworld, worldstruct* worlds, int worldCount)
+{
+    for (int i = 0; i < worldCount; i++)
+        for (int j = 0; j < MAXWORLDPLAYERS; j++)
+            if (!strcmp(name, worlds[i].players[j]))
+            {
+                *playerworld = worlds[i];
+                return true;
+            }
+    return false;
 }
 
 char* GetCertainString(char* buffer, jsmntok_t* tokens, int placeInFile)

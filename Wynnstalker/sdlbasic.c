@@ -96,12 +96,13 @@ bool GetInput(int* flag, int* worldsortFlag, bool* searchactive, bool* enterflag
 			
 			if (e.type == SDL_TEXTINPUT || e.type == SDL_KEYDOWN)
 			{
-				if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_BACKSPACE && strlen(playername) > 0)
+				if (e.key.keysym.sym == SDLK_v && SDL_GetModState() & KMOD_CTRL && (strlen(playername) + strlen(SDL_GetClipboardText())) <= 16)
+					strcat(playername, SDL_GetClipboardText());
+				else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_BACKSPACE && strlen(playername) > 0)
 					playername[strlen(playername) - 1] = 0;
 				else if (e.type == SDL_TEXTINPUT && strlen(playername) < 16)
 					strcat(playername, e.text.text);
 			}
-			
 		}
 		//Show Players textinput finished (hitting enter)
 		if (*flag == SEARCH_PLAYERS && *searchactive == true && strlen(playername) > 2 && e.key.keysym.sym == SDLK_RETURN)
