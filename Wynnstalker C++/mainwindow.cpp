@@ -12,7 +12,7 @@ mainwindow::mainwindow(QWidget *parent)
     infoWidget = new QWidget();
 
     setupMenu();
-    //setupSearch();
+    setupSearch();
     setupShow();
     //setupInfo();
 
@@ -33,12 +33,14 @@ mainwindow::mainwindow(QWidget *parent)
 
 mainwindow::~mainwindow()
 {
+    delete manager;
+    delete timer;
 }
 
 void mainwindow::menuSearch_clicked()
 {
-    //stackedWidget->setCurrentWidget(searchWidget);
-    //currentWidget = SEARCH;
+    stackedWidget->setCurrentWidget(searchWidget);
+    currentWidget = SEARCH;
 }
 
 void mainwindow::menuShow_clicked()
@@ -169,6 +171,7 @@ void mainwindow::managerFinished(QNetworkReply* reply)
             }
         }
     }
+    reply->deleteLater();
 }
 
 void mainwindow::timerAPI()
@@ -185,6 +188,12 @@ void mainwindow::timerAPI()
     }
 }
 
+void mainwindow::searchBack_clicked()
+{
+    stackedWidget->setCurrentWidget(menuWidget);
+    currentWidget = MENU;
+}
+
 void mainwindow::showBack_clicked()
 {
     stackedWidget->setCurrentWidget(menuWidget);
@@ -198,7 +207,7 @@ void mainwindow::keyPressEvent(QKeyEvent *event)
         if(event->key() == Qt::Key_Escape)
             QApplication::exit();
     }
-    else if (currentWidget == SHOW)
+    else if (currentWidget == SHOW || currentWidget == SEARCH)
     {
         if (event->key() == Qt::Key_Escape)
         {
@@ -263,7 +272,49 @@ void mainwindow::setupMenu()
 
 void mainwindow::setupSearch()
 {
+    searchLayout = new QGridLayout();
+    searchThrowerLayout = new QVBoxLayout();
+    searchHunterLayout = new QVBoxLayout();
+
+    searchThrowerLabel = new QLabel();
+    searchHunterLabel = new QLabel();
+    searchLabel = new QLabel();
+    searchTextBox = new QLineEdit();
+    searchBackButton = new QPushButton();
+
+    searchThrowerLabel->setText("Throwers");
+    searchHunterLabel->setText("Hunters");
+    searchLabel->setText("Search:");
+    searchBackButton->setText("Back");
+
+    searchLabel->setStyleSheet("font-size: 30px; font-weight:400; color: white;");
+    searchBackButton->setStyleSheet("font-size: 50px; font-weight:800; color: white; border-style: outset; border-width: 5px; background-color: black");
+    searchThrowerLabel->setStyleSheet("font-size: 30px; font-weight:400; color: green; background-color: black");
+    searchHunterLabel->setStyleSheet("font-size: 30px; font-weight:400; color: red; background-color: black");
+    searchTextBox->setStyleSheet("QLineEdit{ "
+                                        "background-color: black;"
+                                        "border: 2px solid white;"
+                                        "padding: 0 8px;"
+                                        "selection-background-color: grey;"                     
+                                        "font-size: 30px;}"
+                                        "QLineEdit:focus { "
+                                        "background: rgba(100, 100, 100, 150);}");
+    searchWidget->setStyleSheet("background-color: black");
+
+    /*searchThrowerLayout->addWidget(searchThrowerLabel);
+    searchHunterLayout->addWidget(searchHunterLabel);*/
+
+    searchLayout->addWidget(searchLabel, 0, 0, Qt::AlignTop | Qt::AlignRight);
+    searchLayout->addWidget(searchTextBox, 0, 1, 0, 2, Qt::AlignTop);
+    searchLayout->addWidget(searchBackButton, 0, 3, Qt::AlignRight);
+    searchLayout->addWidget(searchThrowerLabel, 1, 0, Qt::AlignTop);
+    searchLayout->addWidget(searchHunterLabel, 1, 2, Qt::AlignTop);
+    /*searchLayout->addLayout(searchThrowerLayout, 1, 0, -1, 1, Qt::AlignTop);
+    searchLayout->addLayout(searchHunterLayout, 1, 2, -1, 3, Qt::AlignTop);*/
     
+    searchWidget->setLayout(searchLayout);
+
+    connect(searchBackButton, SIGNAL(clicked()), this, SLOT(searchBack_clicked()));
 }
 
 void mainwindow::setupShow()

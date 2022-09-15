@@ -12,11 +12,6 @@ world::world()
 
 world::world(const world& rhs)
 {
-
-	uptimeLabel = new QLabel;
-	layout = new QVBoxLayout;
-	button = new QPushButton;
-
 	name = rhs.name;
 	uptime = rhs.uptime;
 	players = rhs.players;

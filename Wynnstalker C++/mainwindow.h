@@ -16,6 +16,7 @@
 #include <QVector>
 #include <QRegion>
 #include <QKeyEvent>
+#include <QLineEdit>
 
 enum page
 {
@@ -34,12 +35,15 @@ public:
     ~mainwindow();
 
 private slots:
+    void managerFinished(QNetworkReply*);
+    void timerAPI();
+    
     void menuSearch_clicked();
     void menuShow_clicked();
     void menuInfo_clicked();
     void menuQuit_clicked();
-    void managerFinished(QNetworkReply*);
-    void timerAPI();
+
+    void searchBack_clicked();
 
     void showBack_clicked();
     inline void showNumber_clicked() { showWorldSort = NUMBER; }
@@ -65,6 +69,11 @@ private:
     QWidget* showWidget;
     QWidget* infoWidget;
 
+    QVector<world> worlds;
+    QNetworkAccessManager* manager;
+    QNetworkRequest request;
+    QTimer* timer;
+
     QVBoxLayout* menuLayout;
 
     QPushButton* menuSearchButton;
@@ -74,10 +83,15 @@ private:
 
     QLabel* menuPlayersOnline;
 
-    QNetworkAccessManager* manager;
-    QNetworkRequest request;
+    QGridLayout* searchLayout;
+    QVBoxLayout* searchThrowerLayout;
+    QVBoxLayout* searchHunterLayout;
 
-    QTimer* timer;
+    QLabel* searchThrowerLabel;
+    QLabel* searchHunterLabel;
+    QLabel* searchLabel;
+    QLineEdit* searchTextBox;
+    QPushButton* searchBackButton;
 
     QGridLayout* showLayout;
     QGridLayout* showWorldLayout;
@@ -91,6 +105,5 @@ private:
     QLabel* showWorldCounter;
     QLabel* showSortby;
 
-    QVector<world> worlds;
     WorldSort showWorldSort;
 };
